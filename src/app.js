@@ -4,6 +4,7 @@ import { MongoClient } from "mongodb"
 import dotenv from "dotenv"
 import bcrypt from "bcrypt"
 import joi from "joi";
+import {v4 as uuid } from "uuid"
 
 
 const app = express()
@@ -32,7 +33,7 @@ app.post("/cadastro", async (req, res) => {
     const vali = validaShema.validate(req.body, { abortEarly: false })
 
     if (vali.error) {
-        const errorn = vali.errorn.detals.map((detail) => detail.message)
+        const errorn = vali.error.details.map((detail) => detail.message)
         return res.status(422).send(errorn);
     }
 
@@ -52,6 +53,7 @@ app.post("/cadastro", async (req, res) => {
 app.post("/login", async (req, res) => {
     const { email, senha } = req.body
     console.log(req.body)
+    console.log(uuid())
 
     try {
         const usuario = await db.collection("usuario").findOne({ email })
@@ -59,8 +61,12 @@ app.post("/login", async (req, res) => {
 
         const verificaSenha = bcrypt.compareSync(senha, usuario.senha)
         if (!verificaSenha) return res.status(401).send("Senha incorreta!")
+        
+        const token = uuid()
+        await db.collection("informacoes").insertOne({token , criaId : usuario._id })
 
-        res.sendStatus(200)
+        res.send(token)
+        
 
     } catch (err) {
         res.status(500).send(err.message)
