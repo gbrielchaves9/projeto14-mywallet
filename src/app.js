@@ -21,9 +21,11 @@ dotenv.config()
 let db
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 mongoClient.connect()
-    .then(() => db = mongoClient.db())
+    .then(() => {
+        db = mongoClient.db()
+        console.log('Connected to the database.')
+    })
     .catch((err) => console.log(err.message))
-
 
 
 app.post("/cadastro", async (req, res) => {
@@ -42,9 +44,10 @@ app.post("/cadastro", async (req, res) => {
         if (usuario) return res.status(409).send("Usuário já cadastrado com este e-mail!")
         const hash = bcrypt.hashSync(senha, 10)
         await db.collection("usuario").insertOne({ nome, email, senha: hash })
-        res.status(201).json({ token, nome , email });
+        res.status(201).json({  nome , email });
     } catch (err) {
         res.status(500).send(err.message)
+        console.error(err);
     }
 })
 
@@ -165,6 +168,7 @@ app.post("/transacoes/saida", async (req, res) => {
       res.status(500).send(err.message);
     }
   });
+
 
 const PORT = 5000
 app.listen(PORT, () => console.log("Server listening on port 5000"))
